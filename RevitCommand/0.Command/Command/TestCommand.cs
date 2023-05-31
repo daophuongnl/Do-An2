@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Utility;
 using Autodesk.Revit.DB.Plumbing;
+using System.Net;
 
 namespace Model.RevitCommand
 {
@@ -28,28 +29,30 @@ namespace Model.RevitCommand
             var mainLocationLine = ((mainPipe.Location as LocationCurve)!.Curve as Line)!;
 
             var projectPoint = mainLocationLine.GetProjectPoint(sprinklerConnectorOrigin);
-
+            // tạo mặt phẳng qua điểm giao
             XYZ normal = XYZ.BasisZ;
             XYZ origin = projectPoint;
             Plane plane1 = Plane.CreateByNormalAndOrigin(normal, origin);
 
-           PointOnPlane point1 = doc.Application.Create.NewPointOnPlane(plane1,UV.Zero, UV
-
-         
+            var endpoint2 = plane1.GetProjectPoint(sprinklerConnectorOrigin);
             
+            
+
             using (var transaction = new Transaction(doc,"Pipe sprinkler"))
             {
                 transaction.Start();
 
                 var pipeTypeId = mainPipe.PipeType.Id;
                 var levelId = mainPipe.LookupParameter("Reference Level").AsElementId();
-                var endpoint1 = sprinklerConnectorOrigin + sprinklerConnectorDirection * 100.0.milimeter2Feet();
+                var endpoint1 = sprinklerConnectorOrigin + sprinklerConnectorDirection * 200.0.milimeter2Feet();
                 var fisrtPipe = Pipe.Create(doc, pipeTypeId, levelId, sprinklerConnector, endpoint1);
 
                 var diameter = 32.0.milimeter2Feet();
                 fisrtPipe.LookupParameter("Diameter").Set(diameter);
 
-                
+
+
+                //Pipe pipe2 = Pipe.Create(doc, pipeTypeId, levelId, projectPoint, endpoint2);
 
                 transaction.Commit();
 
@@ -58,5 +61,40 @@ namespace Model.RevitCommand
             
             //var 
         }
+
+        //public void connector2Pipe(Pipe firstPipe, Pipe secondPipe)
+        //{
+        //    var connector1 = firstPipe.ConnectorManager.UnusedConnectors.Cast<Connector>();
+        //    var connector2 = secondPipe.ConnectorManager.UnusedConnectors.Cast<Connector>();
+        //    Connector? connector1 = null;
+        //    Connector? connector2 = null;
+            
+        //    foreach (var conn1 in connector1)
+        //    {
+        //        if (connector1 !=null && connector2 != null)
+        //        {
+        //            break;
+        //        }  
+        //        var origin1 = conn1.Origin;
+        //        foreach( var conn2 in connector2)
+        //        {
+        //            var origin2= conn2.Origin;
+        //            if (origin1.IsEqual(origin2))
+        //            {
+        //                connector1 = conn1;
+        //                connector2 = conn2;
+        //                break;
+        //            }
+        //        }
+        //    }
+        //    if (connector1== null) || connector2 == null )
+        //    {
+        //        return;
+        //    }
+        //    doc.Create.NewElbowFitting(connector1, connector2);
+        //    doc.Create.NewTeeFitting()
+
+        //}
+
     }
 }
