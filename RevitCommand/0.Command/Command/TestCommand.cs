@@ -37,7 +37,7 @@ namespace Model.RevitCommand
             var endpoint2 = plane1.GetProjectPoint(sprinklerConnectorOrigin);
             
             
-
+            // thực hiện lệnh
             using (var transaction = new Transaction(doc,"Pipe sprinkler"))
             {
                 transaction.Start();
