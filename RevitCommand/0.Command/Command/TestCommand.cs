@@ -98,4 +98,42 @@ namespace Model.RevitCommand
         //}
 
     }
+
+    [Transaction(TransactionMode.Manual)]
+    public class TestCommand2 : RevitCommand
+    {
+        public override void Execute()
+        {
+            var pipe = sel.PickElement<Pipe>();
+            var pipeSolid = pipe.GetEntElement()!.EntSolid.Solid;
+
+            var linkInstance = sel.PickElement<RevitLinkInstance>();
+
+            var linkDoc = linkInstance.GetLinkDocument();
+            var linkWalls = new FilteredElementCollector(linkDoc).OfClass(typeof(Wall)).Cast<Wall>().ToList();
+
+            using (var transaction = new Transaction(doc, "Create "))
+            {
+                transaction.Start();
+
+                foreach (var wall in linkWalls)
+                {
+                    var eWall = wall.GetEntElement()!;
+                    eWall.LinkTransform = linkInstance.GetTransform();
+
+                    var solid = eWall.EntSolid[Entity.SolidCode.Link];
+                    if (solid!.IsIntersect(pipeSolid))
+                    {
+                        var intersectSolid = BooleanOperationsUtils.ExecuteBooleanOperation(solid, pipeSolid, BooleanOperationsType.Intersect);
+                        var intersectPoint = intersectSolid.ComputeCentroid();
+
+                        var modelLine = Line.CreateBound(intersectPoint, intersectPoint + XYZ.BasisX * 10.0.meter2Feet()).CreateModel();
+                        sel.SetElement(modelLine);
+                    }
+                }
+
+                transaction.Commit();
+            }
+        }
+    }
 }
